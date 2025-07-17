@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { jsPDF } from 'jspdf';
 import { Note, Todo } from '../types';
-import { CloseIcon, TrashIcon, BellIcon } from '../constants';
+import { CloseIcon, TrashIcon, BellIcon, ArchiveIcon, UnarchiveIcon } from '../constants';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface NoteEditorProps {
     note: Note | null;
@@ -28,7 +29,8 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
     const [tagInput, setTagInput] = useState('');
     const [todos, setTodos] = useState<Todo[]>([]);
     const [todoInput, setTodoInput] = useState('');
-    const [reminder, setReminder] = useState<string | undefined>(undefined);
+    const [reminder, setReminder] = useState<{ date: string; repeat?: 'daily' | 'weekly' | 'monthly' | 'yearly' } | undefined>(undefined);
+    const [showPreview, setShowPreview] = useState(false);
 
     useEffect(() => {
         if (note) {
@@ -36,7 +38,7 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
             setContent(note.content);
             setTags(note.tags);
             setTodos(note.todos);
-            setReminder(note.reminder);
+            setReminder(note.reminder ? { date: note.reminder.date, repeat: note.reminder.repeat } : undefined);
         }
     }, [note]);
 
@@ -48,7 +50,7 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
             tags,
             todos,
             createdAt: note?.createdAt || new Date().toISOString(),
-            reminder,
+            reminder: reminder ? { date: reminder.date, repeat: reminder.repeat } : undefined,
         };
         onSave(noteToSave);
     };
@@ -93,8 +95,8 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
     };
 
     const setNotification = () => {
-        if (!note || !reminder) return;
-        const reminderTime = new Date(reminder).getTime();
+        if (!note || !reminder?.date) return;
+        const reminderTime = new Date(reminder.date).getTime();
         const now = new Date().getTime();
         const delay = reminderTime - now;
 
@@ -105,21 +107,13 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
                     icon: '/favicon.svg'
                 });
             }, delay);
-            alert(`Hatırlatıcı ${new Date(reminder).toLocaleString()} için ayarlandı.`);
+            alert(`Hatırlatıcı ${new Date(reminder.date).toLocaleString()} için ayarlandı.`);
         } else {
             alert('Lütfen gelecek bir zaman seçin.');
         }
     };
 
-    const exportToTxt = () => {
-        const textContent = `Başlık: ${title}\n\nİçerik:\n${content}\n\nEtiketler: ${tags.join(', ')}\n\nYapılacaklar:\n${todos.map(t => `- [${t.completed ? 'x' : ' '}] ${t.text}`).join('\n')}`;
-        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `${title.replace(/\s+/g, '_')}.txt`;
-        link.click();
-        URL.revokeObjectURL(link.href);
-    };
+    const exportToTxt = () => {        const todoListString = todos.map(t => `- [${t.completed ? 'x' : ' '}] ${t.text}`).join('\n');        const textContent = `Başlık: ${title}\n\nİçerik:\n${content}\n\nEtiketler: ${tags.join(', ')}\n\nYapılacaklar:\n${todoListString}`;        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });        const link = document.createElement('a');        link.href = URL.createObjectURL(blob);        link.download = `${title.replace(/\s+/g, '_')}.txt`;        link.click();        URL.revokeObjectURL(link.href);    };
 
     const exportToPdf = () => {
         const doc = new jsPDF();
@@ -157,12 +151,22 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
                         placeholder="Başlık..."
                         className="w-full bg-transparent text-white text-3xl font-bold p-3 border-2 border-gray-600 focus:outline-none focus:border-red-500 uppercase"
                     />
-                    <textarea
-                        value={content}
-                        onChange={e => setContent(e.target.value)}
-                        placeholder="Aklındakileri yaz..."
-                        className="w-full h-48 bg-transparent text-gray-300 p-3 border-2 border-gray-600 focus:outline-none focus:border-red-500 resize-none"
-                    />
+                    <div className="flex items-center gap-2 mb-4">
+                        <BrutalistButton onClick={() => setShowPreview(false)} className={!showPreview ? 'bg-red-500 text-black' : ''}>Yaz</BrutalistButton>
+                        <BrutalistButton onClick={() => setShowPreview(true)} className={showPreview ? 'bg-red-500 text-black' : ''}>Önizle</BrutalistButton>
+                    </div>
+                    {showPreview ? (
+                        <div className="prose prose-invert max-w-none border-2 border-gray-600 p-3">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                        </div>
+                    ) : (
+                        <textarea
+                            value={content}
+                            onChange={e => setContent(e.target.value)}
+                            placeholder="Aklındakileri yaz..."
+                            className="w-full h-48 bg-transparent text-gray-300 p-3 border-2 border-gray-600 focus:outline-none focus:border-red-500 resize-none"
+                        />
+                    )}
 
                     {/* Tags */}
                     <div className="border-2 border-gray-600 p-3">
@@ -216,10 +220,21 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
                         <div className="flex items-center gap-2">
                             <input
                                 type="datetime-local"
-                                value={reminder ? reminder.substring(0, 16) : ''}
-                                onChange={e => setReminder(e.target.value)}
+                                value={reminder?.date ? reminder.date.substring(0, 16) : ''}
+                                onChange={e => setReminder(prev => ({ ...prev, date: e.target.value }))}
                                 className="bg-transparent text-white p-2 border-2 border-gray-600 focus:outline-none focus:border-red-500"
                             />
+                            <select
+                                value={reminder?.repeat || ''}
+                                onChange={e => setReminder(prev => ({ ...prev, repeat: e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly' | undefined }))}
+                                className="bg-transparent text-white p-2 border-2 border-gray-600 focus:outline-none focus:border-red-500"
+                            >
+                                <option value="">Tek Seferlik</option>
+                                <option value="daily">Günlük</option>
+                                <option value="weekly">Haftalık</option>
+                                <option value="monthly">Aylık</option>
+                                <option value="yearly">Yıllık</option>
+                            </select>
                             <BrutalistButton onClick={handleReminder} className="border-gray-600">
                                 <BellIcon className="w-6 h-6"/>
                             </BrutalistButton>
@@ -233,6 +248,15 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
                         {note && (
                             <BrutalistButton onClick={() => onDelete(note.id)} className="border-red-500 text-red-500 hover:bg-red-500 hover:text-black">
                                 <TrashIcon className="w-5 h-5"/>
+                            </BrutalistButton>
+                        )}
+                        {note && note.isArchived ? (
+                            <BrutalistButton onClick={() => onUnarchive(note.id)} className="border-gray-600">
+                                <UnarchiveIcon className="w-5 h-5"/>
+                            </BrutalistButton>
+                        ) : note && (
+                            <BrutalistButton onClick={() => onArchive(note.id)} className="border-gray-600">
+                                <ArchiveIcon className="w-5 h-5"/>
                             </BrutalistButton>
                         )}
                         <BrutalistButton onClick={exportToTxt} className="border-gray-600">TXT</BrutalistButton>

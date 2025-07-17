@@ -64,7 +64,9 @@ export const useNotes = () => {
             ...noteData,
             id: Date.now().toString(),
             createdAt: new Date().toISOString(),
-            todos: noteData.todos.map(todo => ({...todo, id: `t-${Date.now()}-${Math.random()}`}))
+            todos: noteData.todos.map(todo => ({...todo, id: `t-${Date.now()}-${Math.random()}`})),
+            isArchived: false,
+            reminder: noteData.reminder,
         };
         setNotes(prevNotes => [newNote, ...prevNotes]);
     }, []);
@@ -92,6 +94,18 @@ export const useNotes = () => {
             return note;
         }));
     }, []);
+    
+    const archiveNote = useCallback((noteId: string) => {
+        setNotes(prevNotes =>
+            prevNotes.map(note => (note.id === noteId ? { ...note, isArchived: true } : note))
+        );
+    }, []);
 
-    return { notes, addNote, updateNote, deleteNote, toggleTodo };
+    const unarchiveNote = useCallback((noteId: string) => {
+        setNotes(prevNotes =>
+            prevNotes.map(note => (note.id === noteId ? { ...note, isArchived: false } : note))
+        );
+    }, []);
+
+    return { notes, addNote, updateNote, deleteNote, toggleTodo, archiveNote, unarchiveNote };
 };

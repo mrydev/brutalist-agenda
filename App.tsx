@@ -55,9 +55,11 @@ export default function App() {
     const filteredNotes = useMemo(() => {
         if (!searchTerm) return notes;
         return notes.filter(note =>
-            note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+            !note.isArchived && (
+                note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+            )
         );
     }, [notes, searchTerm]);
 
@@ -75,18 +77,19 @@ export default function App() {
             );
         } 
         if (activeNote && !isEditing) {
-            return <NoteView note={activeNote} onClose={handleClose} onEdit={handleEditNote} />;
+            return <NoteView note={activeNote} onClose={handleClose} onEdit={handleEditNote} onToggleTodo={toggleTodo} onArchive={archiveNote} onUnarchive={unarchiveNote} />;
         }
         return null;
     };
-
-    const renderView = () => {
+        const renderView = () => {
         switch (currentView) {
             case AppView.Calendar:
                 return <CalendarView notes={notes} onSelectNote={handleSelectNote} />;
+            case AppView.Tags:
+                return <TagManager notes={notes} onClose={handleClose} onUpdateNote={updateNote} />;
             case AppView.Notes:
             default:
-                return <NoteList notes={filteredNotes} onSelectNote={handleSelectNote} onSearch={setSearchTerm} searchTerm={searchTerm} onToggleTodo={toggleTodo} />;
+                return <NoteList notes={filteredNotes} onSelectNote={handleSelectNote} onSearch={setSearchTerm} searchTerm={searchTerm} onToggleTodo={toggleTodo} onFilterByDate={(start, end) => { setStartDateFilter(start); setEndDateFilter(end); }} />;
         }
     };
 
@@ -96,6 +99,8 @@ export default function App() {
                 currentView={currentView}
                 onSetView={setCurrentView}
                 onNewNote={handleNewNote}
+                onImportNotes={handleImportNotes}
+                onExportNotes={handleExportNotes}
             />
             <main className="flex-1 p-4 md:p-8 overflow-y-auto">
                 {renderView()}

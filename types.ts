@@ -12,10 +12,15 @@ export interface Note {
     tags: string[];
     todos: Todo[];
     createdAt: string; // ISO string format
-    reminder?: string; // Optional reminder date
+    reminder?: {
+        date: string; // ISO string format
+        repeat?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+    }; // Optional reminder object
+    isArchived: boolean;
 }
 
 export enum AppView {
     Notes = 'NOTES',
     Calendar = 'CALENDAR',
+    Tags = 'TAGS',
 }

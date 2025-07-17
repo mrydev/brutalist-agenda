@@ -23,24 +23,79 @@ const CalendarView: React.FC<CalendarViewProps> = ({ notes, onSelectNote }) => {
         return result;
     };
 
-    const handlePrevWeek = () => {
-        setCurrentDate(addDays(currentDate, -7));
-    };
+    const getRecurringDates = (note: Note, startDate: Date, endDate: Date): Note[] => {
+        if (!note.reminder || !note.reminder.date || !note.reminder.repeat) {
+            return [];
+        }
 
-    const handleNextWeek = () => {
-        setCurrentDate(addDays(currentDate, 7));
+        const recurringNotes: Note[] = [];
+        let reminderDate = new Date(note.reminder.date);
+
+        // Adjust reminderDate to be within the current week or in the past for initial calculation
+        while (reminderDate < startDate) {
+            if (note.reminder.repeat === 'daily') {
+                reminderDate.setDate(reminderDate.getDate() + 1);
+            } else if (note.reminder.repeat === 'weekly') {
+                reminderDate.setDate(reminderDate.getDate() + 7);
+            } else if (note.reminder.repeat === 'monthly') {
+                reminderDate.setMonth(reminderDate.getMonth() + 1);
+            } else if (note.reminder.repeat === 'yearly') {
+                reminderDate.setFullYear(reminderDate.getFullYear() + 1);
+            } else {
+                break;
+            }
+        }
+
+        while (reminderDate <= endDate) {
+            if (reminderDate >= startDate) {
+                recurringNotes.push({
+                    ...note,
+                    id: `${note.id}-${reminderDate.getTime()}`, // Unique ID for recurring instance
+                    createdAt: reminderDate.toISOString(), // Use reminder date for display
+                    title: `[${note.reminder.repeat.toUpperCase()}] ${note.title}`,
+                });
+            }
+
+            if (note.reminder.repeat === 'daily') {
+                reminderDate.setDate(reminderDate.getDate() + 1);
+            } else if (note.reminder.repeat === 'weekly') {
+                reminderDate.setDate(reminderDate.getDate() + 7);
+            } else if (note.reminder.repeat === 'monthly') {
+                reminderDate.setMonth(reminderDate.getMonth() + 1);
+            } else if (note.reminder.repeat === 'yearly') {
+                reminderDate.setFullYear(reminderDate.getFullYear() + 1);
+            } else {
+                break;
+            }
+        }
+        return recurringNotes;
     };
 
     const weekStart = startOfWeek(currentDate);
+    const weekEnd = addDays(weekStart, 6);
     const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
 
     const notesByDate: { [key: string]: Note[] } = {};
     notes.forEach(note => {
-        const dateKey = new Date(note.createdAt).toDateString();
-        if (!notesByDate[dateKey]) {
-            notesByDate[dateKey] = [];
+        // Add original notes
+        const createdAtDate = new Date(note.createdAt);
+        if (createdAtDate >= weekStart && createdAtDate <= weekEnd) {
+            const dateKey = createdAtDate.toDateString();
+            if (!notesByDate[dateKey]) {
+                notesByDate[dateKey] = [];
+            }
+            notesByDate[dateKey].push(note);
         }
-        notesByDate[dateKey].push(note);
+
+        // Add recurring reminders
+        const recurring = getRecurringDates(note, weekStart, weekEnd);
+        recurring.forEach(recNote => {
+            const dateKey = new Date(recNote.createdAt).toDateString();
+            if (!notesByDate[dateKey]) {
+                notesByDate[dateKey] = [];
+            }
+            notesByDate[dateKey].push(recNote);
+        });
     });
     
     const dayNames = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];

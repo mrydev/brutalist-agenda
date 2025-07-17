@@ -1,16 +1,21 @@
 import React from 'react';
 import { Note } from '../types';
-import { CloseIcon, EditIcon, DownloadIcon } from '../constants';
+import { CloseIcon, EditIcon, DownloadIcon, ArchiveIcon, UnarchiveIcon } from '../constants';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface NoteViewProps {
     note: Note;
     onClose: () => void;
     onEdit: () => void;
+    onToggleTodo: (noteId: string, todoId: string) => void;
+    onArchive: (noteId: string) => void;
+    onUnarchive: (noteId: string) => void;
 }
 
-export default function NoteView({ note, onClose, onEdit }: NoteViewProps) {
+export default function NoteView({ note, onClose, onEdit, onToggleTodo, onArchive, onUnarchive }: NoteViewProps) {
     const handleDownloadPdf = () => {
         const input = document.getElementById('note-content-to-pdf');
         if (input) {
@@ -40,6 +45,10 @@ export default function NoteView({ note, onClose, onEdit }: NoteViewProps) {
         }
     };
 
+    const handleToggleTodoClick = (todoId: string) => {
+        onToggleTodo(note.id, todoId);
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
             <div className="bg-[#111111] border-2 border-gray-800 w-full max-w-3xl h-full max-h-[90vh] flex flex-col">
@@ -52,6 +61,15 @@ export default function NoteView({ note, onClose, onEdit }: NoteViewProps) {
                         <button onClick={handleDownloadPdf} className="text-gray-500 hover:text-white transition-colors duration-150">
                             <DownloadIcon className="w-6 h-6" />
                         </button>
+                        {note.isArchived ? (
+                            <button onClick={() => onUnarchive(note.id)} className="text-gray-500 hover:text-white transition-colors duration-150">
+                                <UnarchiveIcon className="w-6 h-6" />
+                            </button>
+                        ) : (
+                            <button onClick={() => onArchive(note.id)} className="text-gray-500 hover:text-white transition-colors duration-150">
+                                <ArchiveIcon className="w-6 h-6" />
+                            </button>
+                        )}
                         <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors duration-150">
                             <CloseIcon className="w-8 h-8" />
                         </button>
@@ -60,9 +78,7 @@ export default function NoteView({ note, onClose, onEdit }: NoteViewProps) {
 
                 <main id="note-content-to-pdf" className="flex-1 p-6 overflow-y-auto space-y-6">
                     <div className="prose prose-invert max-w-none border-2 border-gray-600 p-3">
-                        <p className="text-gray-300 whitespace-pre-wrap break-words">
-                            {note.content}
-                        </p>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
                     </div>
 
                     {note.todos.length > 0 && (
@@ -71,7 +87,7 @@ export default function NoteView({ note, onClose, onEdit }: NoteViewProps) {
                             <div className="space-y-2">
                                 {note.todos.map(todo => (
                                     <div key={todo.id} className={`flex items-center gap-3 ${todo.completed ? 'text-gray-500' : 'text-white'}`}>
-                                        <span className="mr-2">{todo.completed ? '☑' : '☐'}</span>
+                                        <span className="mr-2 cursor-pointer" onClick={() => handleToggleTodoClick(todo.id)}>{todo.completed ? '☑' : '☐'}</span>
                                         <span className={todo.completed ? 'line-through' : ''}>{todo.text}</span>
                                     </div>
                                 ))}
