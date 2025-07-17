@@ -1,80 +1,98 @@
 
 import React, { useState, useMemo } from 'react';
-import { Note, AppView } from './types';
 import { useNotes } from './hooks/useNotes';
 import Sidebar from './components/Sidebar';
 import NoteList from './components/NoteList';
-import NoteEditor from './components/NoteEditor';
 import NoteView from './components/NoteView';
+import NoteEditor from './components/NoteEditor';
 import CalendarView from './components/CalendarView';
+import TagManager from './components/TagManager';
+import { AppView, Note } from './types';
+import './index.css';
 
 export default function App() {
-    const { notes, addNote, updateNote, deleteNote, toggleTodo, archiveNote, unarchiveNote } = useNotes();
+    const {
+        notes,
+        addNote,
+        updateNote,
+        deleteNote,
+        toggleTodo,
+        archiveNote,
+        unarchiveNote
+    } = useNotes();
+
     const [currentView, setCurrentView] = useState<AppView>(AppView.Notes);
-    const [activeNote, setActiveNote] = useState<Note | null>(null);
-    const [isCreating, setIsCreating] = useState<boolean>(false);
-    const [isEditing, setIsEditing] = useState<boolean>(false);
-    const [searchTerm, setSearchTerm] = useState<string>('');
-    const [startDateFilter, setStartDateFilter] = useState<string | null>(null);
-    const [endDateFilter, setEndDateFilter] = useState<string | null>(null);
+    const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
     const handleNewNote = () => {
-        setIsCreating(true);
-        setActiveNote(null);
         setIsEditing(true);
+        setSelectedNote(null);
+        setCurrentView(AppView.Editor);
     };
 
     const handleSelectNote = (note: Note) => {
-        setActiveNote(note);
-        setIsCreating(false);
+        setSelectedNote(note);
         setIsEditing(false);
+        setCurrentView(AppView.Viewer);
     };
 
     const handleEditNote = () => {
         setIsEditing(true);
+        setCurrentView(AppView.Editor);
+    };
+
+    const handleSaveNote = (noteData: Omit<Note, 'id' | 'createdAt'>) => {
+        if (selectedNote) {
+            updateNote({ ...selectedNote, ...noteData });
+        } else {
+            addNote(noteData);
+        }
+        setIsEditing(false);
+        setSelectedNote(null);
+        setCurrentView(AppView.Notes);
     };
 
     const handleClose = () => {
-        setActiveNote(null);
-        setIsCreating(false);
+        setSelectedNote(null);
         setIsEditing(false);
+        setCurrentView(AppView.Notes);
     };
 
-    const handleSaveNote = (noteToSave: Note) => {
-        if (isCreating) {
-            addNote(noteToSave);
-        } else {
-            updateNote(noteToSave);
+    const handleSetView = (view: AppView) => {
+        if (view === AppView.Notes) {
+            setSelectedTag(null); // Reset tag filter when switching to general notes view
         }
-        handleClose();
+        setCurrentView(view);
+        setSelectedNote(null);
+        setIsEditing(false);
     };
     
-    const handleDeleteNote = (noteId: string) => {
-        deleteNote(noteId);
-        handleClose();
-    }
+    const handleTagSelect = (tag: string | null) => {
+        setSelectedTag(tag);
+        setCurrentView(AppView.Notes); // Switch to notes view to show filtered notes
+    };
 
     const handleImportNotes = () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
-        input.onchange = (event) => {
-            const file = (event.target as HTMLInputElement).files?.[0];
+        input.onchange = (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = (event) => {
                     try {
-                        const importedNotes: Note[] = JSON.parse(e.target?.result as string);
-                        // Simple merge for now, could add more sophisticated conflict resolution
-                        setNotes(prevNotes => {
-                            const existingNoteIds = new Set(prevNotes.map(n => n.id));
-                            const newNotes = importedNotes.filter(n => !existingNoteIds.has(n.id));
-                            return [...prevNotes, ...newNotes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-                        });
-                        alert('Notlar başarıyla içe aktarıldı!');
+                        const importedNotes = JSON.parse(event.target?.result as string) as Note[];
+                        // Basic validation
+                        if (Array.isArray(importedNotes)) {
+                            importedNotes.forEach(note => addNote(note));
+                        }
                     } catch (error) {
-                        console.error('Failed to parse imported notes:', error);
-                        alert('İçe aktarma başarısız oldu. Geçersiz JSON dosyası.');
+                        console.error("Failed to parse imported file:", error);
+                        alert("Error: Invalid JSON file.");
                     }
                 };
                 reader.readAsText(file);
@@ -84,86 +102,85 @@ export default function App() {
     };
 
     const handleExportNotes = () => {
-        const json = JSON.stringify(notes, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `brutalist-agenda-notes-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "brutalist-agenda-export.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
     };
 
     const filteredNotes = useMemo(() => {
-        let filtered = notes.filter(note => !note.isArchived);
+        let activeNotes = notes.filter(note => !note.isArchived);
 
+        if (selectedTag) {
+            activeNotes = activeNotes.filter(note => note.tags.includes(selectedTag));
+        }
+        
         if (searchTerm) {
-            filtered = filtered.filter(note =>
+            activeNotes = activeNotes.filter(note =>
                 note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+                note.content.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
+        return activeNotes;
+    }, [notes, searchTerm, selectedTag]);
 
-        if (startDateFilter) {
-            const start = new Date(startDateFilter);
-            filtered = filtered.filter(note => new Date(note.createdAt) >= start);
+    const allTags = useMemo(() => {
+        const tags = new Set<string>();
+        notes.forEach(note => {
+            note.tags.forEach(tag => tags.add(tag));
+        });
+        return Array.from(tags);
+    }, [notes]);
+
+    const renderMainContent = () => {
+        if (isEditing || currentView === AppView.Editor) {
+            return <NoteEditor note={selectedNote} onSave={handleSaveNote} onClose={handleClose} />;
         }
-
-        if (endDateFilter) {
-            const end = new Date(endDateFilter);
-            end.setHours(23, 59, 59, 999); // Include the entire end day
-            filtered = filtered.filter(note => new Date(note.createdAt) <= end);
+        if (selectedNote && currentView === AppView.Viewer) {
+            return <NoteView 
+                        note={selectedNote} 
+                        onClose={handleClose} 
+                        onEdit={handleEditNote} 
+                        onToggleTodo={toggleTodo}
+                        onArchive={archiveNote}
+                        onUnarchive={unarchiveNote}
+                    />;
         }
-
-        return filtered;
-    }, [notes, searchTerm, startDateFilter, endDateFilter]);
-
-    const renderActiveComponent = () => {
-        if (isCreating || (activeNote && isEditing)) {
-            return (
-                <NoteEditor
-                    key={activeNote?.id || 'new'}
-                    note={activeNote}
-                    onSave={handleSaveNote}
-                    onClose={handleClose}
-                    onDelete={handleDeleteNote}
-                    onToggleTodo={toggleTodo}
-                />
-            );
-        } 
-        if (activeNote && !isEditing) {
-            return <NoteView note={activeNote} onClose={handleClose} onEdit={handleEditNote} onToggleTodo={toggleTodo} onArchive={archiveNote} onUnarchive={unarchiveNote} />;
-        }
-        return null;
-    };
-        const renderView = () => {
         switch (currentView) {
             case AppView.Calendar:
                 return <CalendarView notes={notes} onSelectNote={handleSelectNote} />;
             case AppView.Tags:
-                return <TagManager notes={notes} onClose={handleClose} onUpdateNote={updateNote} />;
+                return <TagManager tags={allTags} onTagSelect={handleTagSelect} selectedTag={selectedTag} />;
             case AppView.Notes:
             default:
-                return <NoteList notes={filteredNotes} onSelectNote={handleSelectNote} onSearch={setSearchTerm} searchTerm={searchTerm} onToggleTodo={toggleTodo} onFilterByDate={(start, end) => { setStartDateFilter(start); setEndDateFilter(end); }} />;
+                return (
+                    <NoteList
+                        notes={filteredNotes}
+                        onSelectNote={handleSelectNote}
+                        searchTerm={searchTerm}
+                        onSearchChange={setSearchTerm}
+                        selectedTag={selectedTag}
+                        onClearTagFilter={() => setSelectedTag(null)}
+                    />
+                );
         }
     };
 
     return (
-        <div className="flex h-screen bg-[#111111]">
+        <div className="flex h-screen bg-black text-white">
             <Sidebar 
-                currentView={currentView}
-                onSetView={setCurrentView}
+                currentView={currentView} 
+                onSetView={handleSetView} 
                 onNewNote={handleNewNote}
                 onImportNotes={handleImportNotes}
                 onExportNotes={handleExportNotes}
             />
-            <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-                {renderView()}
+            <main className="flex-1 flex flex-col">
+                {renderMainContent()}
             </main>
-            {renderActiveComponent()}
         </div>
     );
 }
