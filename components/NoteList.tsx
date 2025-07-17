@@ -1,4 +1,8 @@
 
+import { useState, useEffect } from 'react';
+import { Note } from '../types';
+import NoteCard from './NoteCard';
+
 interface NoteListProps {
     notes: Note[];
     onSelectNote: (note: Note) => void;
