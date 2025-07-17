@@ -161,9 +161,10 @@ export default function App() {
                         notes={filteredNotes}
                         onSelectNote={handleSelectNote}
                         searchTerm={searchTerm}
-                        onSearchChange={setSearchTerm}
-                        selectedTag={selectedTag}
-                        onClearTagFilter={() => setSelectedTag(null)}
+                        onSearch={setSearchTerm}
+                        onFilterByDate={(startDate, endDate) => {
+                            // Implement date filtering logic here if needed
+                        }}
                     />
                 );
         }
