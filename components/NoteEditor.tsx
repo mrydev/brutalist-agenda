@@ -142,8 +142,8 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
             <div className="bg-[#111111] border-2 border-red-500 w-full max-w-3xl h-full max-h-[90vh] flex flex-col">
-                <header className="flex items-center justify-between p-4 border-b-2 border-gray-800">
-                    <h2 className="text-xl font-bold uppercase">{note ? 'Notu Düzenle' : 'Yeni Not'}</h2>
+                <header className="flex items-center justify-between p-4 border-b-2 border-gray-600">
+                    <h2 className="text-xl font-bold uppercase text-red-500">{note ? 'Notu Düzenle' : 'Yeni Not'}</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors duration-150">
                         <CloseIcon className="w-8 h-8"/>
                     </button>
@@ -155,22 +155,23 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         placeholder="Başlık..."
-                        className="w-full bg-transparent text-white text-3xl font-bold p-2 border-b-2 border-gray-600 focus:outline-none focus:border-red-500"
+                        className="w-full bg-transparent text-white text-3xl font-bold p-3 border-2 border-gray-600 focus:outline-none focus:border-red-500 uppercase"
                     />
                     <textarea
                         value={content}
                         onChange={e => setContent(e.target.value)}
                         placeholder="Aklındakileri yaz..."
-                        className="w-full h-48 bg-gray-900 text-gray-300 p-3 border-2 border-gray-800 focus:outline-none focus:border-red-500 resize-none"
+                        className="w-full h-48 bg-transparent text-gray-300 p-3 border-2 border-gray-600 focus:outline-none focus:border-red-500 resize-none"
                     />
 
                     {/* Tags */}
-                    <div>
+                    <div className="border-2 border-gray-600 p-3">
+                        <h4 className="font-bold mb-2 uppercase text-gray-400">Etiketler</h4>
                         <div className="flex flex-wrap gap-2 mb-2">
                             {tags.map(tag => (
-                                <div key={tag} className="bg-gray-700 text-white px-3 py-1 flex items-center gap-2">
+                                <div key={tag} className="bg-gray-700 text-white px-3 py-1 flex items-center gap-2 border border-gray-500">
                                     <span>{tag}</span>
-                                    <button onClick={() => setTags(tags.filter(t => t !== tag))} className="text-red-500">
+                                    <button onClick={() => setTags(tags.filter(t => t !== tag))} className="text-red-500 font-bold text-lg leading-none">
                                         &times;
                                     </button>
                                 </div>
@@ -187,12 +188,12 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
                     </div>
                     
                     {/* Todos */}
-                    <div>
-                        <h4 className="font-bold mb-2 uppercase">Yapılacaklar</h4>
+                    <div className="border-2 border-gray-600 p-3">
+                        <h4 className="font-bold mb-2 uppercase text-gray-400">Yapılacaklar</h4>
                         <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
                             {todos.map(t => (
                                 <div key={t.id} className="flex items-center gap-3">
-                                    <input type="checkbox" checked={t.completed} onChange={() => handleToggleTodoInternal(t.id)} className="w-5 h-5 bg-gray-700 border-red-500 text-red-500 focus:ring-red-500 accent-red-500" />
+                                    <input type="checkbox" checked={t.completed} onChange={() => handleToggleTodoInternal(t.id)} className="w-5 h-5 bg-transparent border-2 border-red-500 text-red-500 focus:ring-red-500 accent-red-500" />
                                     <span className={`flex-1 ${t.completed ? 'line-through text-gray-500' : 'text-white'}`}>{t.text}</span>
                                 </div>
                             ))}
@@ -210,24 +211,24 @@ export default function NoteEditor({ note, onSave, onClose, onDelete, onToggleTo
                         </div>
                     </div>
                      {/* Reminder */}
-                    <div>
-                        <h4 className="font-bold mb-2 uppercase">Hatırlatıcı</h4>
+                    <div className="border-2 border-gray-600 p-3">
+                        <h4 className="font-bold mb-2 uppercase text-gray-400">Hatırlatıcı</h4>
                         <div className="flex items-center gap-2">
                             <input
                                 type="datetime-local"
                                 value={reminder ? reminder.substring(0, 16) : ''}
                                 onChange={e => setReminder(e.target.value)}
-                                className="bg-gray-900 text-white p-2 border-2 border-gray-800 focus:outline-none focus:border-red-500"
+                                className="bg-transparent text-white p-2 border-2 border-gray-600 focus:outline-none focus:border-red-500"
                             />
-                            <button onClick={handleReminder} className="p-2 border-2 border-gray-600 hover:border-red-500">
+                            <BrutalistButton onClick={handleReminder} className="border-gray-600">
                                 <BellIcon className="w-6 h-6"/>
-                            </button>
+                            </BrutalistButton>
                         </div>
                     </div>
 
                 </main>
 
-                <footer className="flex items-center justify-between p-4 border-t-2 border-gray-800">
+                <footer className="flex items-center justify-between p-4 border-t-2 border-gray-600">
                     <div className="flex gap-2">
                         {note && (
                             <BrutalistButton onClick={() => onDelete(note.id)} className="border-red-500 text-red-500 hover:bg-red-500 hover:text-black">

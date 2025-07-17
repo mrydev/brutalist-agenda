@@ -21,10 +21,10 @@ const SidebarButton = ({ children, onClick, isActive }: { children: React.ReactN
 export default function Sidebar({ currentView, onSetView, onNewNote }: SidebarProps) {
     return (
         <aside className="w-20 bg-black flex flex-col items-center border-r-2 border-gray-800">
-            <div className="w-full text-center p-4 text-red-500 font-bold text-3xl border-b-2 border-gray-800">
+            <div className="w-full text-center p-4 text-red-500 font-extrabold text-5xl border-b-2 border-gray-800">
                 B.
             </div>
-            <nav className="flex flex-col items-center w-full mt-8 space-y-4">
+            <nav className="flex flex-col items-center w-full mt-8">
                  <SidebarButton onClick={onNewNote} isActive={false}>
                      <div className="flex flex-col items-center">
                         <PlusIcon className="w-8 h-8 text-red-500" />
@@ -35,10 +35,16 @@ export default function Sidebar({ currentView, onSetView, onNewNote }: SidebarPr
                 <div className="w-full h-px bg-gray-800 my-4"></div>
 
                 <SidebarButton onClick={() => onSetView(AppView.Notes)} isActive={currentView === AppView.Notes}>
-                    <NoteIcon className="w-7 h-7" />
+                    <div className="flex flex-col items-center">
+                        <NoteIcon className="w-7 h-7" />
+                        <span className="text-xs mt-1 font-bold">NOTLAR</span>
+                    </div>
                 </SidebarButton>
                 <SidebarButton onClick={() => onSetView(AppView.Calendar)} isActive={currentView === AppView.Calendar}>
-                    <CalendarIcon className="w-7 h-7" />
+                    <div className="flex flex-col items-center">
+                        <CalendarIcon className="w-7 h-7" />
+                        <span className="text-xs mt-1 font-bold">TAKVİM</span>
+                    </div>
                 </SidebarButton>
             </nav>
         </aside>

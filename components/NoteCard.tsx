@@ -19,15 +19,15 @@ export default function NoteCard({ note, onSelect, onToggleTodo }: NoteCardProps
     return (
         <div 
             onClick={onSelect} 
-            className="bg-black border-2 border-gray-800 p-4 flex flex-col justify-between h-48 cursor-pointer group hover:border-red-500 transition-colors duration-100"
+            className="bg-black border-2 border-gray-600 p-4 flex flex-col justify-between h-48 cursor-pointer group hover:border-red-500 transition-colors duration-100"
         >
             <div>
-                <h3 className="font-bold text-lg text-white truncate mb-2">{note.title}</h3>
+                <h3 className="font-bold text-xl text-red-500 uppercase truncate mb-2">{note.title}</h3>
                 <div className="text-gray-400 text-sm break-words line-clamp-3">
-                    {note.content ? <p>{note.content}</p> : (
+                    {note.content ? <p className="text-gray-300">{note.content}</p> : (
                         <ul className="list-none p-0 m-0">
                             {note.todos.slice(0, 3).map(todo => (
-                                <li key={todo.id} className={`flex items-center ${todo.completed ? 'line-through text-gray-500' : ''}`}>
+                                <li key={todo.id} className={`flex items-center ${todo.completed ? 'line-through text-gray-500' : 'text-white'}`}>
                                     <span className="mr-2 cursor-pointer" onClick={(e) => handleTodoClick(e, todo.id)}>
                                         {todo.completed ? '☑' : '☐'}
                                     </span>
@@ -40,11 +40,11 @@ export default function NoteCard({ note, onSelect, onToggleTodo }: NoteCardProps
             </div>
             <div>
                 {note.todos.length > 0 && (
-                    <p className="text-xs text-red-500 font-bold mt-2">{todoSummary}</p>
+                    <p className="text-xs text-red-500 font-bold mt-2 uppercase">{todoSummary}</p>
                 )}
                 <div className="flex flex-wrap gap-1 mt-2">
                     {note.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5">
+                        <span key={tag} className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 border border-gray-500 uppercase">
                             #{tag}
                         </span>
                     ))}

@@ -15,13 +15,13 @@ export default function NoteList({ notes, onSelectNote, onSearch, searchTerm, on
     return (
         <div>
             <div className="mb-8">
-                <h1 className="text-4xl font-bold uppercase text-white mb-2">Not Defteri</h1>
+                <h1 className="text-5xl font-extrabold uppercase text-red-500 mb-4">Not Defteri</h1>
                 <input
                     type="text"
-                    placeholder="Ara veya Filtrele..."
+                    placeholder="ARA VEYA FİLTRELE..."
                     value={searchTerm}
                     onChange={(e) => onSearch(e.target.value)}
-                    className="w-full bg-transparent text-white p-2 border-b-2 border-gray-600 focus:outline-none focus:border-red-500 transition-colors duration-200 text-lg"
+                    className="w-full bg-transparent text-white p-3 border-2 border-gray-600 focus:outline-none focus:border-red-500 transition-colors duration-200 text-lg uppercase"
                 />
             </div>
             {notes.length > 0 ? (
@@ -31,9 +31,9 @@ export default function NoteList({ notes, onSelectNote, onSearch, searchTerm, on
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-20 text-gray-500">
-                    <p className="text-xl">Not bulunamadı.</p>
-                    <p>Yeni bir not oluşturarak başlayın.</p>
+                <div className="text-center py-20 text-gray-500 border-2 border-gray-600 p-8">
+                    <p className="text-2xl font-bold uppercase mb-4">Not bulunamadı.</p>
+                    <p className="text-lg">Yeni bir not oluşturarak başlayın.</p>
                 </div>
             )}
         </div>
