@@ -18,6 +18,9 @@ export default function NoteView({ note, onClose, onEdit }: NoteViewProps) {
                         <button onClick={onEdit} className="text-gray-500 hover:text-white transition-colors duration-150">
                             <EditIcon className="w-6 h-6" />
                         </button>
+                        <button onClick={handleDownloadPdf} className="text-gray-500 hover:text-white transition-colors duration-150">
+                            <DownloadIcon className="w-6 h-6" />
+                        </button>
                         <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors duration-150">
                             <CloseIcon className="w-8 h-8" />
                         </button>

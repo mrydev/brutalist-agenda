@@ -8,9 +8,10 @@ interface NoteListProps {
     onSelectNote: (note: Note) => void;
     onSearch: (term: string) => void;
     searchTerm: string;
+    onToggleTodo: (noteId: string, todoId: string) => void;
 }
 
-export default function NoteList({ notes, onSelectNote, onSearch, searchTerm }: NoteListProps) {
+export default function NoteList({ notes, onSelectNote, onSearch, searchTerm, onToggleTodo }: NoteListProps) {
     return (
         <div>
             <div className="mb-8">
@@ -26,7 +27,7 @@ export default function NoteList({ notes, onSelectNote, onSearch, searchTerm }: 
             {notes.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {notes.map(note => (
-                        <NoteCard key={note.id} note={note} onSelect={() => onSelectNote(note)} />
+                        <NoteCard key={note.id} note={note} onSelect={() => onSelectNote(note)} onToggleTodo={onToggleTodo} />
                     ))}
                 </div>
             ) : (

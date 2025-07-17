@@ -1,14 +1,20 @@
 
 import React from 'react';
-import { Note } from '../types';
+import { Note, Todo } from '../types';
 
 interface NoteCardProps {
     note: Note;
     onSelect: () => void;
+    onToggleTodo: (noteId: string, todoId: string) => void;
 }
 
-export default function NoteCard({ note, onSelect }: NoteCardProps) {
+export default function NoteCard({ note, onSelect, onToggleTodo }: NoteCardProps) {
     const todoSummary = `${note.todos.filter(t => t.completed).length}/${note.todos.length} tamamlandı`;
+
+    const handleTodoClick = (e: React.MouseEvent, todoId: string) => {
+        e.stopPropagation(); // Prevent card selection when toggling todo
+        onToggleTodo(note.id, todoId);
+    };
 
     return (
         <div 
@@ -22,7 +28,9 @@ export default function NoteCard({ note, onSelect }: NoteCardProps) {
                         <ul className="list-none p-0 m-0">
                             {note.todos.slice(0, 3).map(todo => (
                                 <li key={todo.id} className={`flex items-center ${todo.completed ? 'line-through text-gray-500' : ''}`}>
-                                    <span className="mr-2">{todo.completed ? '☑' : '☐'}</span>
+                                    <span className="mr-2 cursor-pointer" onClick={(e) => handleTodoClick(e, todo.id)}>
+                                        {todo.completed ? '☑' : '☐'}
+                                    </span>
                                     <span>{todo.text}</span>
                                 </li>
                             ))}

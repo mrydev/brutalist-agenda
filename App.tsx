@@ -86,7 +86,7 @@ export default function App() {
                 return <CalendarView notes={notes} onSelectNote={handleSelectNote} />;
             case AppView.Notes:
             default:
-                return <NoteList notes={filteredNotes} onSelectNote={handleSelectNote} onSearch={setSearchTerm} searchTerm={searchTerm} />;
+                return <NoteList notes={filteredNotes} onSelectNote={handleSelectNote} onSearch={setSearchTerm} searchTerm={searchTerm} onToggleTodo={toggleTodo} />;
         }
     };
 
